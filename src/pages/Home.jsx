@@ -1,3 +1,5 @@
+import VehicleSlider from '../components/VehicleSlider.jsx';
+
 export default function Home() {
 return (
     <>
@@ -7,6 +9,8 @@ return (
             <p className="heroimg-p">Experience Aurion</p>
             </div>
         </div>
+
+        <VehicleSlider autoSlideMs={5000} />
 
         <div className="home-text-container">
             <p className="home-text">
