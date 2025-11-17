@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-const API = import.meta.env.VITE_API_BASE ?? 'http://localhost:3000';
+const API_ROOT = (import.meta.env.VITE_API_BASE ?? 'http://localhost:3000').replace(/\/+$/, '');
 const FEATURED_ORDER = ['Z-1', 'X-1', 'C-1', 'V-1'];
 
 export default function VehicleSlider({ autoSlideMs = 5000 }) {
@@ -10,7 +10,7 @@ export default function VehicleSlider({ autoSlideMs = 5000 }) {
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/api/vehicles`)
+    fetch(`${API_ROOT}/api/vehicles`)
       .then((r) => r.json())
       .then((data) => setVehicles(data))
       .catch(console.error)

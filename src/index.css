@@ -137,7 +137,7 @@ label {
     text-align: center;
     justify-content: center;
     background-color: #050505;
-    background-image: url("./images/heroimg.jpg");
+    background-image: url("/images/heroimg.jpg");
     background-size: cover;
     background-position: center center;
     width: 100%;
@@ -556,7 +556,7 @@ span {
     text-align: center;
     justify-content: center;
     background-color: rgb(255, 255, 255);
-    background-image: url("./images/heroimg.jpg");
+    background-image: url("/images/heroimg.jpg");
     background-size: cover;
     background-position: center center;
     width: 100%;

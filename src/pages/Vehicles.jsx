@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const API = import.meta.env.VITE_API_BASE ?? 'http://localhost:3000';
+const API_ROOT = (import.meta.env.VITE_API_BASE ?? 'http://localhost:3000').replace(/\/+$/, '');
 const VEHICLE_TYPES = ['all', 'Sedan', 'Sports', 'SUV', 'Truck'];
 
 export default function Vehicles() {
@@ -9,15 +9,15 @@ export default function Vehicles() {
     const [typeFilter, setTypeFilter] = useState('all');
     const [minPriceInput, setMinPriceInput] = useState('');
     const [maxPriceInput, setMaxPriceInput] = useState('');
-    const [appliedFilters, setAppliedFilters] = useState({
+  const [appliedFilters, setAppliedFilters] = useState({
         type: 'all',
         min: '',
         max: '',
-    });
+  });
 
-    useEffect(() => {
-        fetch(`${API}/api/vehicles`)
-        .then((r) => r.json())
+  useEffect(() => {
+    fetch(`${API_ROOT}/api/vehicles`)
+      .then((r) => r.json())
         .then((data) => setCars(data))
         .catch(console.error)
         .finally(() => setLoading(false));
