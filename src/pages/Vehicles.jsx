@@ -9,30 +9,30 @@ export default function Vehicles() {
     const [typeFilter, setTypeFilter] = useState('all');
     const [minPriceInput, setMinPriceInput] = useState('');
     const [maxPriceInput, setMaxPriceInput] = useState('');
-  const [appliedFilters, setAppliedFilters] = useState({
+const [appliedFilters, setAppliedFilters] = useState({
         type: 'all',
         min: '',
         max: '',
-  });
-
-  useEffect(() => {
+});
+// Fetching vehicles from backend
+useEffect(() => { 
     fetch(`${API_ROOT}/api/vehicles`)
-      .then((r) => r.json())
+        .then((r) => r.json())
         .then((data) => setCars(data))
         .catch(console.error)
         .finally(() => setLoading(false));
     }, []);
-
+// Filter based off of min/max
 const filteredCars = (() => {
     const min = appliedFilters.min === '' ? null : Number(appliedFilters.min);
     const max = appliedFilters.max === '' ? null : Number(appliedFilters.max);
-
+// Filtering based off of vehicle type
     return cars.filter((car) => {
     const matchesType =
         appliedFilters.type === 'all' ||
         (car.vehicle_type &&
         car.vehicle_type.toLowerCase() === appliedFilters.type.toLowerCase());
-
+// Filtering based off of price
         const price = Number(car.price_usd);
         const matchesMin = min === null || (!Number.isNaN(min) && price >= min);
         const matchesMax = max === null || (!Number.isNaN(max) && price <= max);
@@ -40,7 +40,7 @@ const filteredCars = (() => {
         return matchesType && matchesMin && matchesMax;
     });
 })();
-
+//Applying filters
 const onApplyFilters = (e) => {
     e.preventDefault();
     setAppliedFilters({
@@ -49,7 +49,7 @@ const onApplyFilters = (e) => {
         max: maxPriceInput.trim(),
     });
 };
-
+// Reseting filters
 const onResetFilters = () => {
     setTypeFilter('all');
     setMinPriceInput('');
@@ -62,7 +62,7 @@ const onResetFilters = () => {
 };
 
 if (loading) return <p style={{ padding: '1rem' }}>Loading…</p>;
-
+// Structure for filtering
 return (
     <section className="vehicles-page">
     <form className="vehicle-filters" onSubmit={onApplyFilters}>
@@ -123,7 +123,7 @@ return (
         {filteredCars.length === 0 ? (
         <p style={{ gridColumn: '1 / -1', padding: '1rem' }}>
             No vehicles match the selected filters.
-        </p>
+        </p> // Below, cards for the car including info fetched from database.
         ) : (
         filteredCars.map((car) => (
             <article key={car.id} className="car_card">
