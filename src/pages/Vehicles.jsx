@@ -1,147 +1,25 @@
-import { useEffect, useState } from 'react';
-
-const API_ROOT = (import.meta.env.VITE_API_BASE ?? 'http://localhost:3000').replace(/\/+$/, '');
-const VEHICLE_TYPES = ['all', 'Sedan', 'Sports', 'SUV', 'Truck'];
+import { useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { VEHICLES, money } from '../lib/vehicles';
+import Icon from '../components/Icon';
 
 export default function Vehicles() {
-    const [cars, setCars] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [typeFilter, setTypeFilter] = useState('all');
-    const [minPriceInput, setMinPriceInput] = useState('');
-    const [maxPriceInput, setMaxPriceInput] = useState('');
-const [appliedFilters, setAppliedFilters] = useState({
-        type: 'all',
-        min: '',
-        max: '',
-});
-// Fetching vehicles from backend
-useEffect(() => { 
-    fetch(`${API_ROOT}/api/vehicles`)
-        .then((r) => r.json())
-        .then((data) => setCars(data))
-        .catch(console.error)
-        .finally(() => setLoading(false));
-    }, []);
-// Filter based off of min/max
-const filteredCars = (() => {
-    const min = appliedFilters.min === '' ? null : Number(appliedFilters.min);
-    const max = appliedFilters.max === '' ? null : Number(appliedFilters.max);
-// Filtering based off of vehicle type
-    return cars.filter((car) => {
-    const matchesType =
-        appliedFilters.type === 'all' ||
-        (car.vehicle_type &&
-        car.vehicle_type.toLowerCase() === appliedFilters.type.toLowerCase());
-// Filtering based off of price
-        const price = Number(car.price_usd);
-        const matchesMin = min === null || (!Number.isNaN(min) && price >= min);
-        const matchesMax = max === null || (!Number.isNaN(max) && price <= max);
-
-        return matchesType && matchesMin && matchesMax;
-    });
-})();
-//Applying filters
-const onApplyFilters = (e) => {
-    e.preventDefault();
-    setAppliedFilters({
-        type: typeFilter,
-        min: minPriceInput.trim(),
-        max: maxPriceInput.trim(),
-    });
-};
-// Reseting filters
-const onResetFilters = () => {
-    setTypeFilter('all');
-    setMinPriceInput('');
-    setMaxPriceInput('');
-    setAppliedFilters({
-        type: 'all',
-        min: '',
-        max: '',
-    });
-};
-
-if (loading) return <p style={{ padding: '1rem' }}>Loading…</p>;
-// Structure for filtering
-return (
-    <section className="vehicles-page">
-    <form className="vehicle-filters" onSubmit={onApplyFilters}>
-        <div className="filter-group">
-            <label htmlFor="vehicle-type">Vehicle type</label>
-            <select
-            id="vehicle-type"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-        >
-            {VEHICLE_TYPES.map((type) => (
-                <option key={type} value={type}>
-                {type === 'all' ? 'All vehicles' : type}
-            </option>
-            ))}
-        </select>
-        </div>
-
-        <div className="filter-group">
-        <label htmlFor="min-price">Min price (USD)</label>
-        <input
-            id="min-price"
-            type="number"
-            min="0"
-            inputMode="numeric"
-            value={minPriceInput}
-            onChange={(e) => setMinPriceInput(e.target.value)}
-            placeholder="e.g. 15000"
-        />
-        </div>
-
-        <div className="filter-group">
-        <label htmlFor="max-price">Max price (USD)</label>
-        <input
-            id="max-price"
-            type="number"
-            min="0"
-            inputMode="numeric"
-            value={maxPriceInput}
-            onChange={(e) => setMaxPriceInput(e.target.value)}
-            placeholder="e.g. 40000"
-        />
-        </div>
-
-        <div className="filter-actions">
-        <button type="submit">Apply filters</button>
-        <button type="button" onClick={onResetFilters} className="ghost">
-            Reset
-        </button>
-        </div>
-    </form>
-
-    <p className="vehicle-results-count">
-        Showing {filteredCars.length} of {cars.length} vehicles
-    </p>
-
-    <div id="json_container" className="car_products">
-        {filteredCars.length === 0 ? (
-        <p style={{ gridColumn: '1 / -1', padding: '1rem' }}>
-            No vehicles match the selected filters.
-        </p> // Below, cards for the car including info fetched from database.
-        ) : (
-        filteredCars.map((car) => (
-            <article key={car.id} className="car_card">
-            <img
-                src={car.picture_path}
-                alt={car.car_name}
-                width={320}
-                height={200}
-                loading="lazy"
-            />
-                <h3>{car.car_name}</h3>
-                <p>${Number(car.price_usd).toLocaleString()}</p>
-                <small>{car.range_mi} mi (est.)</small>
-                <small className="vehicle-type-pill">{car.vehicle_type}</small>
-            </article>
-            ))
-        )}
-    </div>
-    </section>
-);
+  const [type, setType] = useState('All');
+  const [max, setMax] = useState(100000);
+  const [sort, setSort] = useState('featured');
+  const [compare, setCompare] = useState([]);
+  const dialog = useRef(null);
+  const cars = VEHICLES.filter((car) => (type === 'All' || car.vehicle_type === type) && car.price_usd <= max).sort((a, b) => sort === 'price' ? a.price_usd - b.price_usd : sort === 'range' ? b.range_mi - a.range_mi : 0);
+  const comparison = VEHICLES.filter((car) => compare.includes(car.id));
+  const toggle = (id) => setCompare((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  return <div className="vehicles-page page-section">
+    <div className="page-heading"><p className="eyebrow">THE AURION COLLECTION</p><h1>Find your forward<span className="accent">.</span></h1><p>Four electric vehicles. A world of possibility.<br />Find the one that feels like you.</p></div>
+    <div className="catalog-controls"><div className="type-tabs" role="group" aria-label="Vehicle type">{['All', 'Sedan', 'SUV', 'Sports', 'Truck'].map((item) => <button key={item} className={type === item ? 'active' : ''} onClick={() => setType(item)} aria-pressed={type === item}>{item === 'All' ? 'All vehicles' : item === 'Sports' ? 'Grand tourer' : item}</button>)}</div><div className="catalog-options"><label>Budget<select value={max} onChange={(e) => setMax(Number(e.target.value))}><option value={100000}>Any price</option><option value={50000}>Under $50,000</option><option value={65000}>Under $65,000</option><option value={75000}>Under $75,000</option></select></label><label>Sort by<select value={sort} onChange={(e) => setSort(e.target.value)}><option value="featured">Featured</option><option value="price">Price: low to high</option><option value="range">Range: high to low</option></select></label></div></div>
+    <p className="results-count" aria-live="polite">{cars.length} {cars.length === 1 ? 'vehicle' : 'vehicles'} to explore <span>All models are fully electric.</span></p>
+    <div className="vehicle-grid">{cars.map((car) => <article className="vehicle-card" key={car.id}><div className="vehicle-image"><img src={car.picture_path} alt={`Aurion ${car.car_name} electric ${car.vehicle_type.toLowerCase()}`} loading="lazy" /><span className="vehicle-type">{car.vehicle_type === 'Sports' ? 'Grand tourer' : car.vehicle_type}</span><label className="compare-check"><input type="checkbox" checked={compare.includes(car.id)} onChange={() => toggle(car.id)} disabled={!compare.includes(car.id) && compare.length >= 3} />Compare {car.car_name}</label></div><div className="vehicle-body"><div className="vehicle-title"><h2>{car.car_name}</h2><span>From <strong>{money(car.price_usd)}</strong></span></div><p>{car.tagline}</p><div className="card-specs"><span><strong>{car.range_mi} mi</strong>Est. range</span><span><strong>{car.acceleration} s</strong>0–60 mph</span><span><strong>{car.seats}</strong>Seats</span></div><Link className="button outline full" to={`/vehicles/${car.id}`}>Explore & build <Icon name="arrow" size={18} /></Link></div></article>)}</div>
+    {!cars.length && <div className="empty-state"><Icon name="globe" size={40} /><h2>A little more room to explore.</h2><p>No vehicles match these filters. Try a different budget or body style.</p><button className="button dark" onClick={() => { setType('All'); setMax(100000); }}>Reset filters</button></div>}
+    <p className="fine-print">Concept pricing excludes taxes, delivery and fees. Range and performance are illustrative, not certified specifications.</p>
+    {compare.length > 0 && <div className="compare-bar"><div><strong>{compare.length} of 3 selected</strong><span>{comparison.map((car) => car.car_name).join(' · ')}</span></div><button className="text-button" onClick={() => setCompare([])}>Clear</button><button className="button dark" disabled={compare.length < 2} onClick={() => dialog.current.showModal()}>Compare vehicles <Icon name="arrow" size={16} /></button></div>}
+    <dialog ref={dialog} className="compare-dialog" aria-labelledby="compare-title"><div className="dialog-heading"><div><p className="eyebrow">SIDE BY SIDE</p><h2 id="compare-title">Your Aurion shortlist</h2></div><button className="icon-button" aria-label="Close comparison" onClick={() => dialog.current.close()}><Icon name="close" /></button></div><div className="comparison-scroll"><table><thead><tr><th scope="col">Model</th>{comparison.map((car) => <th key={car.id} scope="col"><img src={car.picture_path} alt="" /><strong>{car.car_name}</strong></th>)}</tr></thead><tbody>{[['Starting price', (car) => money(car.price_usd)], ['Body style', (car) => car.vehicle_type], ['Est. range', (car) => `${car.range_mi} mi`], ['0–60 mph', (car) => `${car.acceleration} s`], ['Seats', (car) => car.seats]].map(([label, value]) => <tr key={label}><th scope="row">{label}</th>{comparison.map((car) => <td key={car.id}>{value(car)}</td>)}</tr>)}<tr><th scope="row">Make it yours</th>{comparison.map((car) => <td key={car.id}><Link to={`/vehicles/${car.id}`} className="text-link" onClick={() => dialog.current.close()}>Build {car.car_name} <Icon size={16} /></Link></td>)}</tr></tbody></table></div></dialog>
+  </div>;
 }

@@ -1,34 +1,29 @@
-// src/db.js
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+const fs = require('node:fs');
+const path = require('node:path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
 const mysql = require('mysql2/promise');
 
-
-if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is missing');
-}
-const u = new URL(process.env.DATABASE_URL);
-
-const caPath = path.join(__dirname, 'certs', 'rds-global-bundle.pem');
-const caPem = fs.readFileSync(caPath, 'utf8');
-console.log('[DB] Using CA file:', caPath, 'length:', caPem.length);
-
-const pool = mysql.createPool({
-    host: u.hostname,
-    port: u.port ? Number(u.port) : 3306,
-    user: decodeURIComponent(u.username),
-    password: decodeURIComponent(u.password),
-    database: u.pathname.replace(/^\//, ''),
-    ssl: { ca: caPem, rejectUnauthorized: true },
+// Database access is optional for the concept showcase. No remote database is
+// contacted unless DATABASE_URL is explicitly configured by the operator.
+function createPool() {
+  if (!process.env.DATABASE_URL) return null;
+  const url = new URL(process.env.DATABASE_URL);
+  if (url.protocol !== 'mysql:') throw new Error('DATABASE_URL must use mysql://');
+  const ssl = process.env.DATABASE_SSL === 'false' ? undefined : {
+    rejectUnauthorized: true,
+    ...(process.env.DATABASE_CA_PATH ? { ca: fs.readFileSync(path.resolve(process.env.DATABASE_CA_PATH), 'utf8') } : {}),
+  };
+  return mysql.createPool({
+    host: url.hostname,
+    port: Number(url.port) || 3306,
+    user: decodeURIComponent(url.username),
+    password: decodeURIComponent(url.password),
+    database: url.pathname.replace(/^\//, ''),
+    ssl,
     waitForConnections: true,
     connectionLimit: 10,
+    connectTimeout: 10000,
     queueLimit: 0,
-});
-
-console.log('DB host raw:', u.hostname);
-console.log('DB host JSON:', JSON.stringify(u.hostname));
-console.log('DB name:', u.pathname.replace(/^\//, ''));
-
-
-module.exports = { pool };
+  });
+}
+module.exports = { pool: createPool() };
